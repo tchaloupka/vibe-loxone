@@ -1,0 +1,12 @@
+{
+	"name": "vibe-loxone",
+	"authors": [
+		"Tomáš Chaloupka"
+	],
+	"dependencies": {
+		"vibe-d:http": "~>0.8.0-beta"
+	},
+	"description": "Websocket based Loxone API client library",
+	"copyright": "Copyright © 2017, Tomáš Chaloupka",
+	"license": "BSL-1.0"
+}
