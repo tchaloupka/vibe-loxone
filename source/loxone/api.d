@@ -191,12 +191,12 @@ struct EvDataWeatherEntry
 	}
 }
 
-struct LXResponse(T)
+struct LXResponse
 {
 	struct Root
 	{
 		string control;
-		T value;
+		string value;
 		@name("Code") string code;
 		@optional string lastEdit;
 		@optional long unix;
@@ -205,6 +205,13 @@ struct LXResponse(T)
 	@name("LL") Root root;
 
 	alias root this;
+}
+
+/// Loxone communication exception
+class LoxoneException : Exception
+{
+	/// Constructor
+	this (string msg) { super(msg); }
 }
 
 /**
