@@ -2,11 +2,13 @@ module loxone.client;
 
 import loxone.api;
 
+import std.conv : to;
 import std.datetime;
 import std.exception;
 import std.format : format;
 import std.string : startsWith;
 import std.typecons : Nullable;
+import std.uuid;
 import vibe.core.core;
 import vibe.core.log;
 import vibe.data.json;
@@ -104,6 +106,211 @@ class Loxone
 		auto data = download!T(fname, res);
 		if (!res.isNull) throw new LoxoneException(format!"%s: %s"(res.code, res.value));
 		return data;
+	}
+
+	// Status of a Control
+
+	auto getControlState(T)(T uuid)
+		if (is(T == UUID) || is(T == string))
+	{
+		static if (is(T == string)) auto cmd = format!"jdev/sps/io/%s/state"(uuid);
+		else auto cmd = format!"jdev/sps/io/%s/state"(uuid.getString);
+
+		return query(cmd);
+	}
+
+	auto getControlAll(T)(T uuid)
+		if (is(T == UUID) || is(T == string))
+	{
+		static if (is(T == string)) auto cmd = format!"jdev/sps/io/%s/all"(uuid);
+		else auto cmd = format!"jdev/sps/io/%s/all"(uuid.getString);
+
+		return query(cmd);
+	}
+
+	auto setControlValue(T)(T uuid, string value)
+		if (is(T == UUID) || is(T == string))
+	{
+		static if (is(T == string)) auto cmd = format!"jdev/sps/io/%s/%s"(uuid, value);
+		else auto cmd = format!"jdev/sps/io/%s/%s"(uuid.getString, value);
+
+		return query(cmd);
+	}
+
+	auto getChanges()
+	{
+		return query("jdev/sps/changes");
+	}
+
+	// Sheduled commands
+
+	auto listCommands()
+	{
+		auto res = query("jdev/sps/listcmds");
+		return res;
+	}
+
+	auto addCommand(DateTime time, string name, string command)
+	{
+		auto res = query(
+			format!"jdev/sps/addcmd/%s %s/%s/%s"(time.date.toISOExtString(), time.timeOfDay.toISOExtString(), name, command)
+		);
+		return res;
+	}
+
+	auto removeCommand(DateTime time, string name, string command)
+	{
+		auto res = query(
+			format!"jdev/sps/removecmd/%s %s/%s/%s"(time.date.toISOExtString(), time.timeOfDay.toISOExtString(), name, command)
+		);
+		return res;
+	}
+
+	// PLC Commands
+
+	auto plcGetState()
+	{
+		auto res = query("jdev/sps/state");
+		return cast(PLCStatus)res.to!int;
+	}
+
+	auto plcGetStatus()
+	{
+		return query("jdev/sps/status");
+	}
+
+	auto plcRestart()
+	{
+		return query("jdev/sps/restart");
+	}
+
+	auto plcStop()
+	{
+		return query("jdev/sps/stop");
+	}
+
+	auto plcRun()
+	{
+		return query("jdev/sps/run");
+	}
+
+	auto plcLog()
+	{
+		return query("jdev/sps/log");
+	}
+
+	auto plcNolog()
+	{
+		return query("jdev/sps/nolog");
+	}
+
+	auto plcGetEnumDev()
+	{
+		return query("jdev/sps/enumdev");
+	}
+
+	auto plcGetEnumIn()
+	{
+		return query("jdev/sps/enumin");
+	}
+
+	auto plcGetEnumOut()
+	{
+		return query("jdev/sps/enumout");
+	}
+
+	auto plcGetIdentify()
+	{
+		return query("jdev/sps/identify");
+	}
+
+	// Configuration commands
+
+	auto cfgGetMAC()
+	{
+		return query("jdev/cfg/mac");
+	}
+
+	auto cfgGetVersion()
+	{
+		return query("jdev/cfg/version");
+	}
+
+	auto cfgGetVersionDate()
+	{
+		return query("jdev/cfg/versiondate");
+	}
+
+	auto cfgGetDHCP()
+	{
+		return query("jdev/cfg/dhcp");
+	}
+
+	auto cfgGetIP()
+	{
+		return query("jdev/cfg/ip");
+	}
+
+	auto cfgGetMask()
+	{
+		return query("jdev/cfg/mask");
+	}
+
+	auto cfgGetGateway()
+	{
+		return query("jdev/cfg/gateway");
+	}
+
+	auto cfgGetDeviceName()
+	{
+		return query("jdev/cfg/device");
+	}
+
+	auto cfgGetDNS1()
+	{
+		return query("jdev/cfg/dns1");
+	}
+
+	auto cfgGetDNS2()
+	{
+		return query("jdev/cfg/dns2");
+	}
+
+	auto cfgGetNTP()
+	{
+		return query("jdev/cfg/ntp");
+	}
+
+	auto cfgGetTimezoneOffset()
+	{
+		return query("jdev/cfg/timezoneoffset");
+	}
+
+	// System commands
+
+	auto sysGetCPU()
+	{
+		return query("jdev/sys/cpu");
+	}
+
+	auto sysGetMemory()
+	{
+		return query("jdev/sys/heap");
+	}
+
+	auto sysGetLocalDate()
+	{
+		return query("jdev/sys/date");
+	}
+
+	auto sysGetLocalTime()
+	{
+		return query("jdev/sys/time");
+	}
+
+	auto sysGetFSList(string path = null)
+	{
+		return query(path.length ? format!"jdev/fslist/%s"(path) : "jdev/fslist");
 	}
 
 private:
@@ -221,6 +428,7 @@ private:
 		while (m_conn.waitForData)
 		{
 			auto hdata = m_conn.receiveBinary();
+			logDebug("RAW Header: %s", hdata);
 			auto header = MessageHeader(hdata);
 			logDebug("Header: %s", header);
 			if (header.estimatedLength) continue;

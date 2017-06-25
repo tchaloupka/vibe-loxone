@@ -26,7 +26,7 @@ struct MessageHeader
 {
 	ubyte cBinType;		/// fix 0x03
 	Identifier cIdentifier;	/// 8-Bit Unsigned Integer (little endian)
-	Info cInfo;		/// Info
+	Info cInfo;			/// Info
 	ubyte cReserved;	/// reserved
 	uint nLen;			/// 32-Bit Unsigned Integer (little endian)
 
@@ -215,6 +215,15 @@ class LoxoneException : Exception
 }
 
 /**
+ * As Loxone uses a little different UUID format, this method adjusts the standard UUID string to be compoatible.
+ */
+auto getString(UUID uuid)
+{
+	auto res = uuid.toString();
+	return res[0..23] ~ res[24..$];
+}
+
+/**
  * Helper to read UUID as Loxone is using little endian and D's UUID uses big endian internally
  */
 private auto readUUID(ref ubyte[] data) pure @nogc
@@ -228,19 +237,15 @@ private auto readUUID(ref ubyte[] data) pure @nogc
 	return UUID(d[0..16]);
 }
 
-@safe unittest
+enum PLCStatus
 {
-	import vibe.data.json;
-
-	auto msg = `{"LL": { "control": "jdev/sys/getkey", "value": "30303641374345423239383736344132413937384246453733433843303145443843313636384339", "Code": "200"}}`;
-	auto res = deserializeJson!(LXResponse!string)(msg);
-	assert (res.control == "jdev/sys/getkey");
-	assert (res.value == "30303641374345423239383736344132413937384246453733433843303145443843313636384339");
-}
-
-@safe unittest
-{
-	import std.stdio;
-	auto uuid = parseUUID("0feba4b8-03d3-0708-ffff2611f5ca7ad1");
-	writeln(uuid);
+	no = 0,
+	booting = 1,
+	loaded = 2,
+	started = 3,
+	linkStarted = 4,
+	running = 5,
+	change = 6,
+	error = 7,
+	update = 8
 }
