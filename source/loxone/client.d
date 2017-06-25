@@ -15,6 +15,8 @@ import vibe.data.json;
 import vibe.http.websockets;
 import vibe.inet.url : URL;
 
+enum RESPONSE_TIMEOUT = 10; /// timeout to receive responses
+
 /// Loxone client implementatin
 class Loxone
 {
@@ -54,7 +56,7 @@ class Loxone
 		{
 			if (m_conn.connected)
 			{
-				m_keepaliveResTimer = setTimer(1.seconds, ()
+				m_keepaliveResTimer = setTimer(RESPONSE_TIMEOUT.seconds, ()
 				{
 					logWarn("Keepalive response timeout");
 					this.close();
@@ -135,11 +137,6 @@ class Loxone
 		else auto cmd = format!"jdev/sps/io/%s/%s"(uuid.getString, value);
 
 		return query(cmd);
-	}
-
-	auto getChanges()
-	{
-		return query("jdev/sps/changes");
 	}
 
 	// Sheduled commands
@@ -345,7 +342,7 @@ private:
 
 		while (true)
 		{
-			if (m_await.wait(1.seconds, ecount) == ecount)
+			if (m_await.wait(RESPONSE_TIMEOUT.seconds, ecount) == ecount)
 			{
 				this.close();
 				throw new LoxoneException(format!"Command timeout: %s"(cmd));
@@ -390,7 +387,7 @@ private:
 
 		while (true)
 		{
-			if (m_await.wait(1.seconds, ecount) == ecount)
+			if (m_await.wait(RESPONSE_TIMEOUT.seconds, ecount) == ecount)
 			{
 				this.close();
 				throw new LoxoneException(format!"File download timeout: %s"(fileName));

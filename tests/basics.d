@@ -29,7 +29,6 @@ static this()
 	logDiagnostic("State: %s", lox.plcGetState());
 	logDiagnostic("Status: %s", lox.plcGetStatus());
 	logDiagnostic("Identify: %s", lox.plcGetIdentify());
-	//logDiagnostic("Changes: %s", lox.getChanges());
 	logDiagnostic("CPU: %s", lox.sysGetCPU());
 	logDiagnostic("Device state: %s", lox.getControlState("0febd5d4-0398-e81f-ffffa7de92264b6a"));
 	lox.setControlValue("0febd5d4-0398-e81f-ffffa7de92264b6a", "off");
